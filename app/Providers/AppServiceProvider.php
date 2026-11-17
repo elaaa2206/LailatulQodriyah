@@ -16,6 +16,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if (str_contains(request()->getHost(), 'vercel.app') || config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
         Gate::define('kelola-buku', function (User $user) {
             return $user->hasRole(['admin', 'petugas']);
         });
