@@ -358,7 +358,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-    const API_URL = '/api/buku';
+    const API_URL = '/ajax/buku';
 
     const csrfToken = document.querySelector(
         'meta[name="csrf-token"]'

@@ -7,11 +7,8 @@ use App\Http\Controllers\Admin\TransaksiController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BukuController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-
-Route::get('/uji-error-keamanan', function () {
-    throw new RuntimeException('Tes keamanan aplikasi');
-});
 
 // Halaman utama
 Route::get('/', function () {
@@ -24,32 +21,23 @@ Route::get('/buku', [BukuController::class, 'index'])
 
 // GATE: KHUSUS ADMIN DAN PETUGAS
 Route::middleware(['auth', 'can:kelola-buku'])->group(function () {
-
-    // Form tambah buku
     Route::get('/buku/create', [BukuController::class, 'index'])
         ->name('buku.create');
-
 });
 
 Route::get('/buku/{id}', [BukuController::class, 'show'])
     ->name('buku.show');
 
-// A2: Route SQL Injection
-Route::get('/buku-cari', function () {
-    $judul = request('judul');
+// ENDPOINT AJAX BUKU (MENGGUNAKAN SESSION WEB LANGSUNG)
+Route::prefix('ajax')->group(function () {
+    Route::get('/buku', [ApiBukuController::class, 'index']);
 
-    $data = DB::select(
-        "SELECT * FROM bukus WHERE judul LIKE ?",
-        ["%{$judul}%"]
-    );
-
-    return response()->json($data);
+    Route::middleware(['auth', 'can:kelola-buku'])->group(function () {
+        Route::post('/buku', [ApiBukuController::class, 'store']);
+        Route::put('/buku/{id}', [ApiBukuController::class, 'update']);
+        Route::delete('/buku/{id}', [ApiBukuController::class, 'destroy']);
+    });
 });
-
-// A4: Route detail peminjaman rentan IDOR
-Route::get('/peminjaman/{id}', [TransaksiController::class, 'show'])
-    ->middleware('auth')
-    ->name('peminjaman.detail.rentan');
 
 // Dashboard umum
 Route::get('/dashboard', function () {
@@ -59,56 +47,46 @@ Route::get('/dashboard', function () {
 
 // ADMIN DAN PETUGAS
 Route::middleware(['auth', 'role:admin|petugas'])->group(function () {
-
-    // Dashboard admin
     Route::get('/admin/dashboard', function () {
         return view('dashboard');
     })->middleware('role:admin')
       ->name('admin.dashboard');
 
-    // Dashboard petugas
     Route::get('/petugas/dashboard', function () {
         return view('dashboard');
     })->middleware('role:petugas')
       ->name('petugas.dashboard');
 
-    // Pengajuan peminjaman siswa
     Route::get('/admin/pengajuan-peminjaman',
         [TransaksiController::class, 'pengajuan'])
         ->middleware('permission:memproses-persetujuan-peminjaman')
         ->name('admin.pengajuan');
 
-    // Menyetujui pengajuan
     Route::post('/admin/pengajuan-peminjaman/{id}/setujui',
         [TransaksiController::class, 'setujui'])
         ->middleware('permission:memproses-persetujuan-peminjaman')
         ->name('admin.pengajuan.setujui');
 
-    // Menolak pengajuan
     Route::post('/admin/pengajuan-peminjaman/{id}/tolak',
         [TransaksiController::class, 'tolak'])
         ->middleware('permission:memproses-persetujuan-peminjaman')
         ->name('admin.pengajuan.tolak');
 
-    // Data peminjaman
     Route::get('/admin/peminjaman',
         [TransaksiController::class, 'peminjaman'])
         ->middleware('permission:kelola-peminjaman')
         ->name('admin.peminjaman');
 
-    // Data pengembalian
     Route::get('/admin/pengembalian',
         [TransaksiController::class, 'pengembalian'])
         ->middleware('permission:kelola-pengembalian')
         ->name('admin.pengembalian');
 
-    // Laporan perpustakaan
     Route::get('/admin/laporan',
         [LaporanController::class, 'index'])
         ->middleware('permission:lihat-laporan')
         ->name('admin.laporan');
 
-    // Mencatat pengembalian
     Route::post('/admin/pengembalian/{id}/catat',
         [TransaksiController::class, 'catatPengembalian'])
         ->name('admin.pengembalian.catat');
@@ -121,7 +99,6 @@ Route::delete('/buku/{id}', [ApiBukuController::class, 'destroy'])
 
 // KHUSUS ADMIN
 Route::middleware(['auth', 'role:admin'])->group(function () {
-
     Route::resource('/admin/users', UserController::class)
         ->names('admin.users')
         ->except(['show']);
@@ -129,7 +106,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
 // KHUSUS SISWA
 Route::middleware(['auth', 'role:siswa'])->group(function () {
-
     Route::get('/siswa/dashboard', function () {
         return view('dashboard');
     })->name('siswa.dashboard');
@@ -152,7 +128,6 @@ Route::middleware(['auth', 'role:siswa'])->group(function () {
 
 // PROFIL PENGGUNA
 Route::middleware(['auth'])->group(function () {
-
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
 
@@ -165,18 +140,3 @@ Route::middleware(['auth'])->group(function () {
 
 // Autentikasi Breeze
 require __DIR__.'/auth.php';
-
-Route::get('/cek-db', function () {
-    try {
-        return [
-            'koneksi' => 'OK',
-            'database' => \DB::connection()->getDatabaseName(),
-            'jumlah_user' => \App\Models\User::count(),
-            'session_driver' => config('session.driver'),
-            'session_secure' => config('session.secure'),
-            'app_url' => config('app.url'),
-        ];
-    } catch (\Throwable $e) {
-        return ['koneksi' => 'GAGAL', 'error' => $e->getMessage()];
-    }
-});
