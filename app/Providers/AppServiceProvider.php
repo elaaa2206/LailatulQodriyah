@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
-use App\Models\User;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if (str_contains(request()->getHost(), 'vercel.app') || config('app.env') === 'production') {
+        if (config('app.env') === 'production' || str_contains((string) config('app.url'), 'vercel.app')) {
             URL::forceScheme('https');
         }
 
