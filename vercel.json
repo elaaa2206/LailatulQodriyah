@@ -36,6 +36,7 @@
     "SESSION_DRIVER": "database",
     "SESSION_SECURE_COOKIE": "true",
     "SESSION_SAME_SITE": "lax",
-    "SESSION_HTTP_ONLY": "true"
+    "SESSION_HTTP_ONLY": "true",
+    "SANCTUM_STATEFUL_DOMAINS": "lailatul-qodriyah.vercel.app"
   }
 }
