@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -6,17 +5,19 @@ use App\Http\Controllers\Api\BukuController;
 use App\Http\Controllers\Api\RekapController;
 
 // Melihat daftar dan detail buku (publik)
-Route::get('/buku', [BukuController::class, 'index'])
-    ->name('api.buku.index');
+Route::middleware(['web'])->group(function () {
+    Route::get('/buku', [BukuController::class, 'index'])
+        ->name('api.buku.index');
 
-Route::get('/buku/{id}', [BukuController::class, 'show'])
-    ->name('api.buku.show');
+    Route::get('/buku/{id}', [BukuController::class, 'show'])
+        ->name('api.buku.show');
+});
 
 // CRUD buku (khusus admin dan petugas)
 Route::middleware([
     'web',
     'auth',
-    'permission:kelola-data-buku'
+    'can:kelola-buku'
 ])->group(function () {
 
     Route::post('/buku', [BukuController::class, 'store'])
