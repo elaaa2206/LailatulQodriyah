@@ -166,4 +166,17 @@ Route::middleware(['auth'])->group(function () {
 // Autentikasi Breeze
 require __DIR__.'/auth.php';
 
-
+Route::get('/cek-db', function () {
+    try {
+        return [
+            'koneksi' => 'OK',
+            'database' => \DB::connection()->getDatabaseName(),
+            'jumlah_user' => \App\Models\User::count(),
+            'session_driver' => config('session.driver'),
+            'session_secure' => config('session.secure'),
+            'app_url' => config('app.url'),
+        ];
+    } catch (\Throwable $e) {
+        return ['koneksi' => 'GAGAL', 'error' => $e->getMessage()];
+    }
+});
