@@ -1,7 +1,8 @@
 <x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
+    <h2 class="text-center text-lg font-bold text-gray-800 mb-4">
+        Login Perpustakaan Digital - 250441100067
+    </h2>
+    
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
